@@ -1,0 +1,34 @@
+<?php
+// koneksi.php sudah mencakup koneksi database
+include "koneksi.php";
+
+$response = array();
+
+// 1. Mengambil total omset hari ini
+$sql_omset = "SELECT SUM(total_harga) as total_omset FROM transaksi WHERE DATE(tanggal_transaksi) = CURDATE()";
+$result_omset = mysqli_query($conn, $sql_omset);
+$data_omset = mysqli_fetch_assoc($result_omset);
+
+$omset_hari_ini = $data_omset['total_omset'] ? $data_omset['total_omset'] : 0;
+
+// 2. Mengambil 10 transaksi terakhir
+$sql_transaksi = "SELECT nomor_nota, nama_pelanggan, total_harga, tanggal_transaksi FROM transaksi ORDER BY transaksi_id DESC LIMIT 10";
+$result_transaksi = mysqli_query($conn, $sql_transaksi);
+
+$list_transaksi = array();
+while ($row = mysqli_fetch_assoc($result_transaksi)) {
+    $list_transaksi[] = $row;
+}
+
+// 3. Mengirimkan respons dalam bentuk JSON
+if ($result_omset && $result_transaksi) {
+    $response["status"] = "success";
+    $response["omset_hari_ini"] = $omset_hari_ini;
+    $response["transaksi_terakhir"] = $list_transaksi;
+} else {
+    $response["status"] = "error";
+    $response["message"] = "Gagal mengambil data dashboard";
+}
+
+echo json_encode($response);
+?>
